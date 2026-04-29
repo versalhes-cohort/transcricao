@@ -1,0 +1,4 @@
+streamlit==1.40.0
+yt-dlp==2025.1.15
+openai==1.55.0
+pydub==0.25.1

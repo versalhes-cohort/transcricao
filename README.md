@@ -28,31 +28,58 @@ Cole a URL de um vídeo, clique em **Transcrever**, e receba a transcrição com
 
 ## Como rodar localmente
 
-> Setup completo virá com a Story 1.1 (Project Foundation). Esta seção será atualizada quando o código existir.
+**Pré-requisitos:**
+- Python 3.11 ou superior
+- `ffmpeg` instalado no sistema (`apt install ffmpeg` no Linux/WSL, `brew install ffmpeg` no macOS, ou via [chocolatey](https://chocolatey.org/) no Windows)
+
+**Passos:**
 
 ```bash
-# Pré-requisitos: Python 3.11+, ffmpeg instalado no sistema
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate                # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env       # preencha OPENAI_API_KEY
+cp .env.example .env                      # depois edite .env e preencha OPENAI_API_KEY
 streamlit run app/main.py
 ```
 
-## Deploy
+A aplicação abre em `http://localhost:8501`.
 
-Hospedado no **Railway** como serviço único. Build via `Dockerfile` (com `ffmpeg` instalado). HTTPS automático.
+## Como fazer deploy (Railway)
 
-A URL pública será adicionada aqui após Story 1.7.
+1. Instale e autentique o Railway CLI:
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+2. Vincule o repositório a um projeto Railway:
+   ```bash
+   railway link        # se o projeto já existir
+   # ou
+   railway init        # para criar um novo projeto
+   ```
+3. No dashboard do Railway, abra **Variables** e adicione `OPENAI_API_KEY` com a sua chave real.
+4. Push para o GitHub:
+   ```bash
+   git push origin main
+   ```
+   Railway detecta o push, lê o `Dockerfile` e faz o build + deploy automaticamente. Healthcheck em `/_stcore/health` (Streamlit nativo).
+
+A URL pública (`*.up.railway.app`) aparece no dashboard após o primeiro deploy bem-sucedido.
 
 ## Variáveis de ambiente
 
 | Variável | Obrigatória | Origem |
 |---|---|---|
-| `OPENAI_API_KEY` | ✅ | Dashboard OpenAI |
-| `PORT` | ✅ (auto) | Railway |
+| `OPENAI_API_KEY` | ✅ | https://platform.openai.com/api-keys |
+| `PORT` | ✅ (auto) | Injetada pelo Railway |
 
-⚠️ **Atenção:** `.env` está no `.gitignore`. **Nunca commite a `OPENAI_API_KEY`.**
+⚠️ **Crítico:** `.env` está no `.gitignore`. **Nunca commite a `OPENAI_API_KEY`** — o repositório é público.
+
+## Custo & Limites
+
+Esta aplicação usa a **API OpenAI Whisper** (paga, ~$0.006/minuto de áudio). Antes de fazer deploy de produção, configure um **teto de gasto mensal de USD $20** em https://platform.openai.com/settings/organization/limits — esta é a **única proteção contra cobrança inesperada** (NFR3 do PRD). Não há proteção de custo no código da aplicação.
+
+Custo esperado em uso típico (~20 vídeos × 15 min/mês): **~$2/mês** em Whisper + ~$5/mês em hosting Railway = **~$7/mês total**.
 
 ## Estrutura (planejada)
 

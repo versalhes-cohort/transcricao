@@ -100,5 +100,6 @@ temp/
 .aiox/install-log.txt
 .aiox/handoffs/
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 .aiox-core/local/
 .aiox-core/node_modules/
