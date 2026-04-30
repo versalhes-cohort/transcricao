@@ -3,6 +3,7 @@
 > Aplicação web pessoal que transcreve qualquer vídeo público (YouTube, Instagram, TikTok, embeds) para texto em **PT-BR**, com duração total no formato `MM:SS`.
 
 **Status:** 🚧 Em desenvolvimento (MVP)
+**Live (canary):** https://transcricao-production-1dac.up.railway.app
 **Stack:** Python 3.11+ • Streamlit • yt-dlp • OpenAI Whisper • Railway
 **Documentos:** [`docs/brief.md`](docs/brief.md) • [`docs/prd.md`](docs/prd.md) • [`docs/architecture.md`](docs/architecture.md)
 
