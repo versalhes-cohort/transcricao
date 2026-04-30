@@ -28,3 +28,8 @@ class UnsupportedSourceError(TranscricaoError):
 class VideoTooLongError(TranscricaoError):
     category = "VIDEO_TOO_LONG"
     user_message_pt = "Vídeo excede o limite de 60 minutos. Tente um vídeo mais curto."
+
+
+class DownloadError(TranscricaoError):
+    category = "DOWNLOAD_FAILED"
+    user_message_pt = "Falha ao baixar o áudio. Tente novamente ou use outra fonte."
