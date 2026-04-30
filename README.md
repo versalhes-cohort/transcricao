@@ -45,6 +45,15 @@ streamlit run app/main.py
 
 A aplicação abre em `http://localhost:8501`.
 
+### Testes
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+Os testes ficam em `tests/` e cobrem lógica pura (validação de URL, formatadores, matemática de chunks). Componentes que dependem de rede (`yt-dlp`, OpenAI Whisper) são exercidos via teste manual durante validação de deploy.
+
 ## Como fazer deploy (Railway)
 
 1. Instale e autentique o Railway CLI:
