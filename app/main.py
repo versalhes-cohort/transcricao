@@ -1,8 +1,9 @@
-"""Streamlit entry point — full pipeline UI (validate → metadata → download).
+"""Streamlit entry point — full pipeline UI.
 
-Story 1.2 added URL validation + metadata fetch.
-Story 1.3 added audio download + tempfile cleanup + NFR10-safe logging.
-Story 1.4 will replace the "Story 1.4 hook" block with Whisper transcription.
+Story 1.2: URL validation + metadata fetch.
+Story 1.3: audio download + tempfile cleanup + NFR10-safe logging.
+Story 1.4: Whisper transcription (single-call + chunked) + retries.
+Story 1.5 will replace the st.text_area placeholder with proper rendering.
 """
 
 import logging
@@ -15,10 +16,16 @@ import streamlit as st
 from app.errors import TranscricaoError
 from app.extractor import download_audio, fetch_metadata
 from app.logging_config import hash_url, setup_logging
+from app.transcriber import assert_api_key_configured, transcribe
 from app.url_validation import validate_url
 
 # Idempotent — Streamlit reruns this module on every interaction.
 setup_logging()
+
+# AC9 (Story 1.4): fail fast at app startup if OPENAI_API_KEY is missing.
+# Raises RuntimeError before Streamlit serves any request.
+assert_api_key_configured()
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,9 +65,7 @@ if submitted:
                 st.error(e.user_message_pt)
                 st.stop()
 
-            # AC8: single INFO log line with duration + file size + source.
-            # Emitted here (not inside download_audio) because metadata.duration_seconds
-            # only lives at this scope. URL is hashed; never logged in full.
+            # AC8 (Story 1.3): single INFO log line with download metadata.
             logger.info(
                 "download_ok url_hash=%s source=%s duration_s=%d file_size_bytes=%d",
                 hash_url(url),
@@ -71,17 +76,34 @@ if submitted:
 
             status.update(label="Transcrevendo...", state="running")
 
-            # === STORY 1.4 HOOK ===
-            # Story 1.4 will replace this block with Whisper transcription.
-            # For Story 1.3, we just confirm the download landed.
-            st.info(
-                f"Áudio baixado em ephemeral storage. "
-                f"Tamanho: {audio_path.stat().st_size} bytes. "
-                f"Duração: {metadata.duration_seconds}s. "
-                f"(Story 1.4 vai adicionar a transcrição aqui.)"
+            try:
+                transcript = transcribe(audio_path, metadata.duration_seconds)
+            except TranscricaoError as e:
+                status.update(label="Falha", state="error")
+                st.error(e.user_message_pt)
+                st.stop()
+
+            # AC8-equivalent for transcription stage. NFR10: ONLY length is
+            # logged; transcript content is NEVER emitted to logs.
+            logger.info(
+                "transcription_ok url_hash=%s source=%s duration_s=%d transcript_chars=%d",
+                hash_url(url),
+                metadata.source_domain,
+                metadata.duration_seconds,
+                len(transcript),
             )
-            status.update(label="Pronto para próximas etapas", state="complete")
+
+            # === STORY 1.5 HOOK ===
+            # Story 1.5 will replace this st.text_area with the proper
+            # MM:SS-formatted output + copy-to-clipboard button.
+            st.text_area(
+                label="Transcrição (PT-BR)",
+                value=transcript,
+                height=400,
+            )
+            st.write(f"Duração total (segundos): {metadata.duration_seconds}")
+            status.update(label="Pronto", state="complete")
         finally:
-            # AC7: cleanup happens whether transcription succeeds or fails.
-            # Container restart on Railway also wipes /tmp — defense-in-depth.
+            # AC7 (Story 1.3): cleanup happens whether transcription succeeds
+            # or fails. Container restart on Railway also wipes /tmp.
             shutil.rmtree(audio_dir, ignore_errors=True)

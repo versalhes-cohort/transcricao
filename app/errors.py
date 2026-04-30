@@ -33,3 +33,8 @@ class VideoTooLongError(TranscricaoError):
 class DownloadError(TranscricaoError):
     category = "DOWNLOAD_FAILED"
     user_message_pt = "Falha ao baixar o áudio. Tente novamente ou use outra fonte."
+
+
+class TranscriptionError(TranscricaoError):
+    category = "TRANSCRIPTION_FAILED"
+    user_message_pt = "Falha na transcrição. Tente novamente em alguns minutos."
