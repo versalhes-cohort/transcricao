@@ -1,0 +1,36 @@
+# Files NOT needed inside the Railway build context.
+# The Dockerfile only COPYs requirements.txt + app/, so excluding these
+# saves ~10 MB upload and speeds up build setup.
+
+# AIOX framework (development tooling, not runtime)
+.aiox/
+.aiox-core/
+squads/
+AGENTS.md
+pro-installed-manifest.yaml
+pro-version.json
+
+# Project documentation (not needed at runtime)
+docs/
+
+# AI-tooling sidecar dirs
+.agent/
+.antigravity/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.github/
+
+# Local dev artifacts
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+
+# Misc
+README.md
