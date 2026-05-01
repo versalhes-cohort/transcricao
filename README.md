@@ -2,8 +2,8 @@
 
 > Aplicação web pessoal que transcreve qualquer vídeo público (YouTube, Instagram, TikTok, embeds) para texto em **PT-BR**, com duração total no formato `MM:SS`.
 
-**Status:** 🚧 Em desenvolvimento (MVP)
-**Live (canary):** https://transcricao-production-1dac.up.railway.app
+**Status:** ✅ MVP em produção
+**Live:** https://transcricao-production-1dac.up.railway.app
 **Stack:** Python 3.11+ • Streamlit • yt-dlp • OpenAI Whisper • Railway
 **Documentos:** [`docs/brief.md`](docs/brief.md) • [`docs/prd.md`](docs/prd.md) • [`docs/architecture.md`](docs/architecture.md)
 
@@ -103,6 +103,34 @@ Custo esperado em uso típico (~20 vídeos × 15 min/mês): **~$2/mês** em Whis
 ├── railway.toml
 └── .env.example
 ```
+
+## Production Deployment
+
+- **Live URL:** https://transcricao-production-1dac.up.railway.app
+- **Hosting:** Railway (project `transcricao`, service `transcricao`, environment `production`)
+- **Deploy trigger:** auto-redeploy on push to `origin/main` (Railway GitHub integration)
+- **Healthcheck:** `GET /_stcore/health` → `200 OK` (Streamlit native, ~0.5s)
+- **Build:** Dockerfile (Python 3.11 + ffmpeg + pinned deps), ~10-15 min cold build
+- **Smoke tests:** see [`docs/smoke-tests.md`](docs/smoke-tests.md)
+- **Operational runbook:** see [`RUNBOOK.md`](RUNBOOK.md)
+
+### Rollback Procedure
+
+If a bad deploy reaches production:
+
+1. Open the Railway dashboard → project `transcricao` → service `transcricao` → **Deployments** tab.
+2. Locate the last known-good deploy (status `SUCCESS`, was active before the bad one).
+3. Click `⋮` → **Redeploy** on that deploy.
+4. Wait for `SUCCESS` state (~10–15 min for Docker + ffmpeg + Python deps).
+5. Verify with:
+   ```bash
+   curl -fsS https://transcricao-production-1dac.up.railway.app/_stcore/health
+   # expect: HTTP 200 OK
+   ```
+
+**Faster alternative** (if Git history is clean): `git revert <bad-commit-sha> && git push origin main` — Railway auto-redeploys from the reverted commit. Use this when the bad deploy's root cause is clear in the diff.
+
+For more operational procedures (yt-dlp upgrade, key rotation, log inspection), see [`RUNBOOK.md`](RUNBOOK.md).
 
 ## Workflow de desenvolvimento
 
