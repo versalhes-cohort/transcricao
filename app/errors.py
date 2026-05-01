@@ -1,10 +1,16 @@
-"""PT-BR error catalog and exception hierarchy.
+"""PT-BR error catalog and exception hierarchy — FINAL (after Story 1.6).
 
-Story 1.2 scope: base + the 3 errors used in URL validation and metadata fetch.
-Story 1.3, 1.4, 1.6 will extend this module with DownloadError, TranscriptionError,
-UnexpectedError as those stages are implemented.
+The 7 categories enumerated in Story 1.6 AC1 (PRD verbatim):
+    INVALID_URL, UNSUPPORTED_SOURCE, VIDEO_TOO_LONG, DOWNLOAD_FAILED,
+    TRANSCRIPTION_FAILED, TIMEOUT, UNEXPECTED.
 
-Source: docs/architecture.md §6.1 — exception hierarchy.
+Story-of-origin per class:
+    Story 1.2 → InvalidURLError, UnsupportedSourceError, VideoTooLongError
+    Story 1.3 → DownloadError
+    Story 1.4 → TranscriptionError
+    Story 1.6 → TimeoutError (reserved for Phase 2), UnexpectedError
+
+Source: docs/architecture.md §6.1 — exception hierarchy (final state).
 """
 
 
@@ -38,3 +44,25 @@ class DownloadError(TranscricaoError):
 class TranscriptionError(TranscricaoError):
     category = "TRANSCRIPTION_FAILED"
     user_message_pt = "Falha na transcrição. Tente novamente em alguns minutos."
+
+
+class TimeoutError(TranscricaoError):
+    """Reserved category for AC1 catalog completeness.
+
+    MVP architecture (§6.1) does NOT actively raise this — wall-clock
+    timeouts surface as DOWNLOAD_FAILED or TRANSCRIPTION_FAILED depending
+    on which stage stalls. Reserved here so the catalog is complete and a
+    future Phase 2 timeout layer can raise it without schema migration.
+
+    Note: shadows Python's built-in `TimeoutError` inside this module.
+    Intentional — matches the AC1 category vocabulary. Harmless because
+    the rest of the app imports specific symbols by name.
+    """
+
+    category = "TIMEOUT"
+    user_message_pt = "A operação demorou mais que o esperado. Tente novamente."
+
+
+class UnexpectedError(TranscricaoError):
+    category = "UNEXPECTED"
+    user_message_pt = "Algo deu errado. Tente novamente em alguns minutos."
